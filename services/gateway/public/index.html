@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>M365 Big Brain - Chat</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; margin: 0; display: grid; min-height: 100vh; }
+      header { padding: 1rem 1.25rem; border-bottom: 1px solid #4443; }
+      main { display: grid; grid-template-rows: 1fr auto; max-width: 920px; width: 100%; margin: 0 auto; gap: 1rem; padding: 1rem; box-sizing: border-box; }
+      #messages { overflow: auto; display: flex; flex-direction: column; gap: .75rem; padding: .5rem; }
+      .msg { padding: .75rem 1rem; border-radius: .75rem; max-width: 80ch; }
+      .user { background: #4f46e533; align-self: flex-end; }
+      .bot { background: #10b98133; align-self: flex-start; }
+      form { display: flex; gap: .5rem; padding: .75rem; border: 1px solid #4443; border-radius: .75rem; }
+      input[type=text] { flex: 1; padding: .75rem; border: 1px solid #4443; border-radius: .5rem; font-size: 1rem; }
+      button { padding: .75rem 1rem; border: 0; background: #4f46e5; color: white; border-radius: .5rem; font-weight: 600; cursor: pointer; }
+      button:disabled { opacity: .6; cursor: not-allowed; }
+      footer { text-align: center; padding: .75rem; color: #999; font-size: .9rem; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>M365 Big Brain</strong>
+    </header>
+    <main>
+      <div id="messages"></div>
+      <form id="chat-form">
+        <input id="message" type="text" placeholder="Say something..." autocomplete="off" required />
+        <button id="send" type="submit">Send</button>
+      </form>
+    </main>
+    <footer>
+      <span>Status: <span id="status">ready</span></span>
+    </footer>
+    <script>
+      const form = document.getElementById('chat-form');
+      const input = document.getElementById('message');
+      const messages = document.getElementById('messages');
+      const statusEl = document.getElementById('status');
+
+      function addMessage(text, who) {
+        const div = document.createElement('div');
+        div.className = `msg ${who}`;
+        div.textContent = text;
+        messages.appendChild(div);
+        messages.scrollTop = messages.scrollHeight;
+      }
+
+      async function sendChat(text) {
+        const resp = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text })
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        return await resp.json();
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const text = input.value.trim();
+        if (!text) return;
+        input.value = '';
+        addMessage(text, 'user');
+
+        statusEl.textContent = 'thinking…';
+        form.querySelector('button').disabled = true;
+        try {
+          const data = await sendChat(text);
+          addMessage(data.reply, 'bot');
+        } catch (err) {
+          addMessage('Error: ' + err.message, 'bot');
+        } finally {
+          form.querySelector('button').disabled = false;
+          statusEl.textContent = 'ready';
+        }
+      });
+    </script>
+  </body>
+</html>
