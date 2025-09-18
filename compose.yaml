@@ -1,0 +1,82 @@
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: services/gateway/Dockerfile
+    environment:
+      RUST_LOG: info
+      APP_BASE_URL: "http://localhost:5173"
+      OIDC_AUTHORITY: "https://login.microsoftonline.com/common"
+      OIDC_CLIENT_ID: "your-client-id"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      DATABASE_URL: "postgres://app:app@postgres:5432/app"
+      QDRANT_URL: "http://qdrant:6333"
+      PORT: "5173"
+    ports: ["5173:5173"]
+    depends_on: [postgres, qdrant, redis]
+  auth_broker:
+    build:
+      context: .
+      dockerfile: services/auth_broker/Dockerfile
+    environment:
+      RUST_LOG: info
+      PORT: "5180"
+    ports: ["5180:5180"]
+  connectors:
+    build:
+      context: .
+      dockerfile: services/connectors/Dockerfile
+    environment:
+      RUST_LOG: info
+      DATABASE_URL: "postgres://app:app@postgres:5432/app"
+      QDRANT_URL: "http://qdrant:6333"
+      PORT: "5190"
+    depends_on: [postgres, qdrant, redis]
+  webhook:
+    build:
+      context: .
+      dockerfile: services/webhook/Dockerfile
+    environment:
+      RUST_LOG: info
+      GRAPH_VALIDATION_CERT_KID: "kid-001"
+      GRAPH_DECRYPT_PRIVATE_KEY_PEM: "${GRAPH_DECRYPT_PRIVATE_KEY_PEM:-}"
+      PORT: "8443"
+    ports: ["8443:8443"]
+  indexer:
+    build:
+      context: .
+      dockerfile: services/indexer/Dockerfile
+    environment:
+      RUST_LOG: info
+      DATABASE_URL: "postgres://app:app@postgres:5432/app"
+      QDRANT_URL: "http://qdrant:6333"
+      PORT: "5200"
+    depends_on: [postgres, qdrant]
+  orchestrator:
+    build:
+      context: .
+      dockerfile: services/orchestrator/Dockerfile
+    environment:
+      RUST_LOG: info
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      PORT: "5210"
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    ports: ["5432:5432"]
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports: ["6333:6333"]
+    volumes: ["qdrant:/qdrant/storage"]
+  redis:
+    image: redis:7
+    ports: ["6379:6379"]
+
+volumes:
+  pgdata: {}
+  qdrant: {}
+
