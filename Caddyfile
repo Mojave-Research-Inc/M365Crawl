@@ -1,0 +1,11 @@
+{
+    email you@example.com
+}
+
+# Replace example.com with your domain.
+example.com {
+    encode zstd gzip
+    reverse_proxy /api/* gateway:5173
+    reverse_proxy /healthz gateway:5173
+    reverse_proxy gateway:5173
+}
