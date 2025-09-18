@@ -1,0 +1,32 @@
+[workspace]
+members = [
+    "services/gateway",
+    "services/auth_broker",
+    "services/connectors",
+    "services/webhook",
+    "services/indexer",
+    "services/orchestrator",
+    "crates/common",
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+
+[workspace.dependencies]
+axum = "0.7"
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+thiserror = "1"
+uuid = { version = "1", features = ["v4", "serde"] }
+dotenvy = "0.15"
+reqwest = { version = "0.12", features = ["json", "stream", "gzip", "brotli", "deflate", "rustls-tls"] }
+tower = "0.5"
+tower-http = { version = "0.5", features = ["cors", "trace"] }
+hyper = { version = "1", features = ["full"] }
+time = "0.3"
+
